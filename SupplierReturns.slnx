@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SupplierReturns.Api/SupplierReturns.Api.csproj" />
+  <Project Path="SupplierReturns.Tests/SupplierReturns.Tests.csproj" />
+</Solution>
