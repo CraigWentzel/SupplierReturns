@@ -12,6 +12,7 @@ A REST API for managing suppliers and the goods you send back to them, from a dr
 - Filtering returns by status and supplier
 - Input validation and clear error responses (400, 404, 409)
 - Interactive API documentation through Swagger UI
+- Business rules covered by automated xUnit tests (in-memory SQLite)
 
 ## Tech stack
 
@@ -19,6 +20,7 @@ A REST API for managing suppliers and the goods you send back to them, from a dr
 - Entity Framework Core 10 with SQLite
 - Code-first migrations
 - OpenAPI + Swagger UI
+- xUnit for unit tests
 
 ## Getting started
 
@@ -41,6 +43,16 @@ dotnet run
 ```
 
 `dotnet ef database update` creates the SQLite database and tables. When the app starts, the terminal prints the address it is listening on (for example `http://localhost:5276`). Open that address and add `/swagger` to try the endpoints.
+
+### Run the tests
+
+From the repository root:
+
+```
+dotnet test
+```
+
+Stop the API first if it is running, because a running `SupplierReturns.Api.exe` locks the file and the build fails. The tests use an in-memory SQLite database, so they need no setup and leave no data behind.
 
 ## Endpoints
 
@@ -139,12 +151,15 @@ POST /api/Returns/1/credit
 ## Project structure
 
 ```
-SupplierReturns.Api/
-├── Controllers/   HTTP endpoints; thin, they only translate results to status codes
-├── Data/          AppDbContext and the data-layer classes (SupplierData, ReturnData)
-├── Dtos/          Request and response shapes, with validation attributes
-├── Models/        Database entities (Supplier, SupplierReturn, SupplierReturnLine)
-└── Migrations/    EF Core migrations
+SupplierReturns/
+├── SupplierReturns.slnx
+├── SupplierReturns.Api/
+│   ├── Controllers/   HTTP endpoints; thin, they only translate results to status codes
+│   ├── Data/          AppDbContext and the data-layer classes (SupplierData, ReturnData)
+│   ├── Dtos/          Request and response shapes, with validation attributes
+│   ├── Models/        Database entities (Supplier, SupplierReturn, SupplierReturnLine)
+│   └── Migrations/    EF Core migrations
+└── SupplierReturns.Tests/   xUnit tests for the return workflow rules
 ```
 
 ## Design notes
@@ -154,12 +169,13 @@ SupplierReturns.Api/
 - **Status as text:** the status is stored as a string in the database, so rows stay readable and reordering the enum later can't corrupt data.
 - **Money and SQLite:** the SQLite provider stores `decimal` values as text, so it cannot sum or sort them inside the database query. The API loads the rows first and calculates totals in memory, which is fine at this scale. A move to SQL Server would remove the limitation.
 - **Swagger and enums:** the status filter appears in Swagger UI as a number (0 = Draft, 1 = AwaitingCredit, 2 = Credited). The API also accepts the status names.
+- **Dependency warning:** building shows NU1903 for the SQLite native library bundled with EF Core's SQLite provider. The fix depends on an upstream release, and the newer provider targets .NET 11. The API takes no raw SQL from users, and moving to SQL Server (see Roadmap) removes the dependency.
 
 ## Roadmap
 
 Ideas for the next phases:
 
-- Automated tests (unit tests for the workflow rules, integration tests for the endpoints)
+- Integration tests for the endpoints (the workflow rules already have unit tests)
 - Authentication and authorisation
 - Pagination and sorting on the list endpoints
 - Editing the lines of a Draft return
