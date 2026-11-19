@@ -17,9 +17,14 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
-
+    
   <ItemGroup>
     <ProjectReference Include="..\SupplierReturns.Api\SupplierReturns.Api.csproj" />
+  </ItemGroup>
+
+    <ItemGroup>
+    <!-- Known SQLite advisory with no fixed package yet. Test project only, in-memory data. -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-2m69-gcr7-jv3q" />
   </ItemGroup>
 
 </Project>
